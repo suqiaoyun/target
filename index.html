@@ -3,26 +3,44 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
-    <title>Elite Shooter - Fixed Dragging</title>
+    <title>Elite Shooter Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-family: 'Roboto', sans-serif; background: #f8fafc; overflow: hidden; touch-action: none; -webkit-user-select: none; margin: 0; position: fixed; width: 100%; height: 100%; }
         #stage { height: 100%; width: 100%; position: relative; background-image: radial-gradient(#e2e8f0 1.2px, transparent 1.2px); background-size: 30px 30px; }
-        #ball { position: absolute; width: 42px; height: 42px; background: radial-gradient(circle at 30% 30%, #3b82f6, #1d4ed8); border: 3px solid #fff; border-radius: 50%; z-index: 1000; box-shadow: 0 8px 15px rgba(29, 78, 216, 0.3); cursor: grab; }
+        
+        /* 增加触控响应区域 */
+        #ball { 
+            position: absolute; width: 42px; height: 42px; 
+            background: radial-gradient(circle at 30% 30%, #3b82f6, #1d4ed8);
+            border: 3px solid #fff; border-radius: 50%; z-index: 5000; 
+            box-shadow: 0 8px 15px rgba(29, 78, 216, 0.3);
+            cursor: pointer; touch-action: none;
+        }
+
         .bow-string { stroke: #334155; stroke-width: 5; fill: none; stroke-linecap: round; pointer-events: none; }
         #target-box { position: absolute; display: flex; flex-direction: column; gap: 4px; z-index: 100; will-change: transform; }
         .score-zone { background: white; display: flex; align-items: center; justify-content: center; font-weight: 900; box-shadow: 0 4px 10px rgba(0,0,0,0.06); border-radius: 6px; }
-        @media screen and (orientation: landscape) { #target-box { top: 25%; right: 28%; width: 160px; height: 50%; } .score-zone { flex: 1; font-size: 1.4rem; border-left: 6px solid; } }
-        @media screen and (orientation: portrait) { #target-box { top: 20%; left: 80%; transform: translateX(-50%); width: 75px; height: 50%; } .score-zone { flex: 1; font-size: 0.9rem; border-left: 4px solid; } }
-        #center-pop { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); pointer-events: none; font-weight: 900; font-size: 100px; z-index: 5000; opacity: 0; display: none; }
+
+        @media screen and (orientation: landscape) {
+            #target-box { top: 25%; right: 28%; width: 160px; height: 50%; }
+            .score-zone { flex: 1; font-size: 1.4rem; border-left: 6px solid; }
+        }
+
+        @media screen and (orientation: portrait) {
+            #target-box { top: 20%; left: 80%; width: 75px; height: 50%; }
+            .score-zone { flex: 1; font-size: 0.9rem; border-left: 4px solid; }
+        }
+
+        #center-pop { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); pointer-events: none; font-weight: 900; font-size: 100px; z-index: 6000; opacity: 0; display: none; }
         .pop-animation { display: block !important; animation: scorePop 0.6s ease-out forwards; }
         @keyframes scorePop { 0% { transform: translate(-50%, -50%) scale(0.4); opacity: 0; } 40% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1); opacity: 0; } }
     </style>
 </head>
 <body>
 
-<header class="fixed top-0 w-full px-6 py-4 flex justify-between items-center z-[2000] bg-white/70 backdrop-blur-md border-b">
+<header class="fixed top-0 w-full px-6 py-4 flex justify-between items-center z-[7000] bg-white/70 backdrop-blur-md border-b">
     <div class="font-black text-slate-300 text-[10px] tracking-widest uppercase">Target Elite</div>
     <div class="flex gap-4">
         <div class="text-right"><p class="text-[8px] text-slate-400">SHOTS</p><p id="v-shots" class="font-black text-xl">10</p></div>
@@ -32,9 +50,10 @@
 
 <div id="stage">
     <div id="center-pop"></div>
-    <div id="mask" class="absolute inset-0 z-[3000] bg-slate-900/40 backdrop-blur-sm flex items-center justify-center">
+    <div id="mask" class="absolute inset-0 z-[8000] bg-slate-900/40 backdrop-blur-sm flex items-center justify-center">
         <button onclick="initGame()" class="px-14 py-4 bg-blue-600 text-white rounded-xl shadow-2xl font-black text-xl active:scale-95 transition-all">START</button>
     </div>
+
     <div id="target-box">
         <div class="score-zone border-rose-500 text-rose-600" data-pts="100">100</div>
         <div class="score-zone border-slate-600 text-slate-700" data-pts="-10">-10</div>
@@ -44,11 +63,13 @@
         <div class="score-zone border-slate-300 text-slate-400" data-pts="0">0</div>
         <div class="score-zone border-blue-500 text-blue-600" data-pts="50">50</div>
     </div>
-    <svg class="absolute inset-0 w-full h-full pointer-events-none">
+
+    <svg class="absolute inset-0 w-full h-full pointer-events-none z-[4000]">
         <path id="bow" stroke="#cbd5e1" stroke-width="8" fill="none" stroke-linecap="round" />
         <path id="s1" class="bow-string" />
         <path id="s2" class="bow-string" />
     </svg>
+
     <div id="ball"></div>
 </div>
 
@@ -86,11 +107,17 @@
 
     function animateTarget() {
         if (!active) return;
-        const speed = 1.8; 
-        const range = isL ? 150 : 100;
+        const speed = isL ? 2.0 : 1.5; 
+        const range = isL ? 160 : 100;
         targetY += speed * targetDir;
         if (Math.abs(targetY) > range) targetDir *= -1;
-        targetBox.style.transform = isL ? `translateY(${targetY}px)` : `translateX(-50%) translateY(${targetY}px)`;
+        
+        // 手机端关键修复：同时保留水平居中偏移和垂直滑动
+        if (isL) {
+            targetBox.style.transform = `translateY(${targetY}px)`;
+        } else {
+            targetBox.style.transform = `translateX(-50%) translateY(${targetY}px)`;
+        }
         animId = requestAnimationFrame(animateTarget);
     }
 
@@ -119,10 +146,11 @@
         if(!active || isFlying) return;
         const p = getPos(e);
         const rect = ball.getBoundingClientRect();
-        // 增加点击范围判定
-        if (Math.hypot(p.clientX - (rect.left + 21), p.clientY - (rect.top + 21)) < 60) {
+        // 判定距离加宽到 80，更易拖拽
+        if (Math.hypot(p.clientX - (rect.left + 21), p.clientY - (rect.top + 21)) < 80) {
             dragging = true; startX = p.clientX; startY = p.clientY;
             ball.style.transition = 'none';
+            if(e.cancelable) e.preventDefault();
         }
     };
 
@@ -137,19 +165,20 @@
         if(e.cancelable) e.preventDefault();
     };
 
-    const onEnd = () => {
+    const onEnd = (e) => {
         if(!dragging) return;
-        if (moveY > 85) {
-            dragging = false; moveX = 0; moveY = 0;
+        dragging = false; 
+        if (moveY > 85) { // 底部防刷分重置
+            moveX = 0; moveY = 0;
             ball.style.transition = 'all 0.3s';
-            resetLayout(); return;
+            resetLayout(); 
+            return;
         }
-        dragging = false; isFlying = true; shots--;
+        isFlying = true; shots--;
         document.getElementById('v-shots').innerText = shots;
         launch(-moveX * 0.22, -moveY * 0.22);
     };
 
-    // 显式绑定事件监听器
     window.addEventListener('mousedown', onStart);
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onEnd);
@@ -182,8 +211,16 @@
             }
 
             if(hit || curX > window.innerWidth || curY > window.innerHeight || curX < -100 || curY < -100) {
-                if(shots <= 0) { setTimeout(() => { alert('游戏结束！总分：' + score); location.reload(); }, 600); }
-                else { isFlying = false; moveX = 0; moveY = 0; ball.style.transition = 'all 0.4s'; resetLayout(); }
+                if(shots <= 0) { 
+                    setTimeout(() => { 
+                        alert('游戏结束！总分：' + score); 
+                        location.reload(); 
+                    }, 600); 
+                } else { 
+                    isFlying = false; moveX = 0; moveY = 0; 
+                    ball.style.transition = 'all 0.4s'; 
+                    resetLayout(); 
+                }
             } else requestAnimationFrame(step);
         };
         requestAnimationFrame(step);
