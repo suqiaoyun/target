@@ -3,80 +3,81 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
-    <title>Target Elite - Challenge Mode</title>
+    <title>Target Elite - Horizontal Targets</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-family: 'Roboto', sans-serif; background: #f0f2f5; overflow: hidden; touch-action: none; -webkit-user-select: none; margin: 0; position: fixed; width: 100%; height: 100%; }
-        #stage { height: 100%; width: 100%; position: relative; background-image: radial-gradient(#d1d5db 1.5px, transparent 1.5px); background-size: 40px 40px; transition: background-color 0.2s; }
+        #stage { height: 100%; width: 100%; position: relative; background-image: radial-gradient(#d1d5db 1.5px, transparent 1.5px); background-size: 40px 40px; }
         
         #ball { 
-            position: absolute; width: 50px; height: 50px; 
+            position: absolute; width: 48px; height: 48px; 
             background: radial-gradient(circle at 30% 30%, #60a5fa, #2563eb);
             border: 3px solid #fff; border-radius: 50%; z-index: 1000;
-            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.3);
-            cursor: grab;
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+            touch-action: none;
         }
 
         .bow-string { stroke: #1e293b; stroke-width: 5; fill: none; stroke-linecap: round; pointer-events: none; }
         
-        /* 靶子基础样式 */
-        .score-zone { 
-            background: white; border-radius: 8px; display: flex; align-items: center; 
-            justify-content: center; font-weight: 900; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-        }
-
-        /* 居中分数弹出动画 */
+        /* 居中分数弹出 */
         #center-pop {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            pointer-events: none; font-weight: 900; font-size: 100px;
+            position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%);
+            pointer-events: none; font-weight: 900; font-size: 80px;
             z-index: 5000; opacity: 0; display: none;
         }
-        .pop-animation { display: block !important; animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .pop-animation { display: block !important; animation: popIn 0.6s ease-out forwards; }
         @keyframes popIn {
             0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
-            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+            50% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
             100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
         }
 
-        /* 屏幕闪红效果 */
-        .danger-flash { background-color: rgba(239, 68, 68, 0.2) !important; }
-
+        /* 📱 手机竖屏：靶子从左往右排 */
         @media screen and (orientation: portrait) {
-            #target-box { height: 60%; width: 100%; flex-direction: column-reverse; padding-top: 80px; gap: 8px; }
-            .score-zone { width: 85%; height: 36px; border-bottom: 5px solid; font-size: 1rem; }
+            #target-box { 
+                position: absolute; top: 120px; left: 0; width: 100%; 
+                flex-direction: row; flex-wrap: wrap; justify-content: center; 
+                padding: 0 10px; gap: 6px; 
+            }
+            .score-zone { 
+                width: 22%; height: 50px; border-bottom: 5px solid; 
+                font-size: 0.9rem; background: white; border-radius: 8px;
+                display: flex; align-items: center; justify-content: center; font-weight: 900;
+            }
         }
+
+        /* 💻 横屏保持侧边排列 */
         @media screen and (orientation: landscape) {
-            #target-box { width: 45%; height: 100%; flex-direction: column; align-items: flex-end; padding-right: 40px; right: 0; position: absolute; justify-content: center; gap: 10px; }
-            .score-zone { width: 75%; height: 42px; border-left: 8px solid; font-size: 1.1rem; }
+            #target-box { width: 40%; height: 100%; flex-direction: column; align-items: flex-end; padding-right: 40px; right: 0; position: absolute; justify-content: center; gap: 10px; }
+            .score-zone { width: 75%; height: 45px; border-left: 8px solid; font-size: 1.2rem; background: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 900; }
         }
     </style>
 </head>
 <body>
 
 <header class="fixed top-0 w-full px-6 py-3 flex justify-between items-center z-[2000] bg-white/80 border-b">
-    <div class="font-black text-gray-400 text-xs">TARGET ELITE</div>
+    <div class="font-black text-gray-400 text-xs tracking-tighter">TARGET ELITE</div>
     <div class="flex gap-4">
-        <div class="text-right"><p class="text-[8px] text-gray-400">SHOTS</p><p id="v-shots" class="font-black text-xl text-gray-800">10</p></div>
-        <div class="text-right"><p class="text-[8px] text-gray-400">SCORE</p><p id="v-score" class="font-black text-xl text-blue-600">0000</p></div>
+        <div class="text-right"><p id="v-shots" class="font-black text-xl text-gray-800">10</p></div>
+        <div class="text-right"><p id="v-score" class="font-black text-xl text-blue-600">0000</p></div>
     </div>
 </header>
 
 <div id="stage">
     <div id="center-pop"></div>
-
     <div id="mask" class="absolute inset-0 z-[3000] bg-slate-900/40 backdrop-blur-sm flex items-center justify-center">
-        <button onclick="initGame()" class="px-12 py-5 bg-blue-600 text-white rounded-2xl shadow-xl font-black text-xl active:scale-95 transition-all">START CHALLENGE</button>
+        <button onclick="initGame()" class="px-10 py-4 bg-blue-600 text-white rounded-xl shadow-xl font-black text-lg active:scale-95 transition-all">START</button>
     </div>
 
-    <div id="target-box" class="flex px-4">
-        <div class="score-zone border-blue-500 text-blue-500" data-pts="50">50</div>
-        <div class="score-zone border-gray-400 text-gray-400" data-pts="0">0</div>
-        <div class="score-zone border-emerald-500 text-emerald-500" data-pts="75">75</div>
-        <div class="score-zone border-red-400 text-red-500" data-pts="-5">-5</div>
+    <div id="target-box" class="flex">
+        <div class="score-zone border-blue-500 text-blue-500" data-pts="100">100</div>
+        <div class="score-zone border-red-600 text-red-600" data-pts="-10">-10</div>
         <div class="score-zone border-amber-500 text-amber-500" data-pts="90">90</div>
-        <div class="score-zone border-red-600 text-red-700" data-pts="-10">-10</div>
-        <div class="score-zone border-rose-600 text-rose-600" data-pts="100">100</div>
+        <div class="score-zone border-red-400 text-red-400" data-pts="-5">-5</div>
+        <div class="score-zone border-emerald-500 text-emerald-500" data-pts="75">75</div>
+        <div class="score-zone border-gray-400 text-gray-400" data-pts="0">0</div>
+        <div class="score-zone border-sky-500 text-sky-500" data-pts="50">50</div>
     </div>
 
     <svg class="absolute inset-0 w-full h-full pointer-events-none">
@@ -96,15 +97,15 @@
         const w = window.innerWidth, h = window.innerHeight;
         isL = w > h;
         if (isL) {
-            oX = w * 0.18; oY = h * 0.5 - 25;
+            oX = w * 0.18; oY = h * 0.5 - 24;
             bow.setAttribute('d', `M ${w*0.1} ${h*0.3} Q ${w*0.2} ${h*0.5} ${w*0.1} ${h*0.7}`);
         } else {
-            oX = w * 0.5 - 25; oY = h * 0.8;
-            bow.setAttribute('d', `M ${w*0.15} ${h*0.85} Q ${w*0.5} ${h*0.75} ${w*0.85} ${h*0.85}`);
+            oX = w * 0.5 - 24; oY = h * 0.82;
+            bow.setAttribute('d', `M ${w*0.15} ${h*0.88} Q ${w*0.5} ${h*0.78} ${w*0.85} ${h*0.88}`);
         }
         if(!isFlying) {
             ball.style.left = oX + 'px'; ball.style.top = oY + 'px'; ball.style.transform = 'none';
-            updateStrings(oX + 25, oY + 25);
+            updateStrings(oX + 24, oY + 24);
         }
     };
 
@@ -114,8 +115,8 @@
             s1.setAttribute('d', `M ${w*0.1} ${h*0.3} L ${px} ${py}`);
             s2.setAttribute('d', `M ${w*0.1} ${h*0.7} L ${px} ${py}`);
         } else {
-            s1.setAttribute('d', `M ${w*0.15} ${h*0.85} L ${px} ${py}`);
-            s2.setAttribute('d', `M ${w*0.85} ${h*0.85} L ${px} ${py}`);
+            s1.setAttribute('d', `M ${w*0.15} ${h*0.88} L ${px} ${py}`);
+            s2.setAttribute('d', `M ${w*0.85} ${h*0.88} L ${px} ${py}`);
         }
     };
 
@@ -123,13 +124,8 @@
         centerPop.innerText = (pts > 0 ? '+' : '') + pts;
         centerPop.style.color = pts > 0 ? '#2563eb' : (pts < 0 ? '#ef4444' : '#94a3b8');
         centerPop.classList.remove('pop-animation');
-        void centerPop.offsetWidth; // 触发重绘
+        void centerPop.offsetWidth;
         centerPop.classList.add('pop-animation');
-        
-        if(pts < 0) {
-            stage.classList.add('danger-flash');
-            setTimeout(() => stage.classList.remove('danger-flash'), 200);
-        }
     }
 
     function initGame() {
@@ -147,7 +143,7 @@
         if(!active || isFlying) return;
         const p = getPos(e);
         const rect = ball.getBoundingClientRect();
-        if (Math.hypot(p.clientX - (rect.left + 25), p.clientY - (rect.top + 25)) < 60) {
+        if (Math.hypot(p.clientX - (rect.left + 24), p.clientY - (rect.top + 24)) < 60) {
             dragging = true; startX = p.clientX; startY = p.clientY;
             ball.style.transition = 'none';
         }
@@ -160,7 +156,7 @@
         const dist = Math.hypot(dx, dy), limit = 110, ratio = Math.min(dist, limit) / (dist || 1);
         moveX = dx * ratio; moveY = dy * ratio;
         ball.style.transform = `translate(${moveX}px, ${moveY}px)`;
-        updateStrings(oX + 25 + moveX, oY + 25 + moveY);
+        updateStrings(oX + 24 + moveX, oY + 24 + moveY);
         if(e.cancelable) e.preventDefault();
     };
 
@@ -168,7 +164,7 @@
         if(!dragging) return;
         dragging = false; isFlying = true; shots--;
         document.getElementById('v-shots').innerText = shots;
-        launch(-moveX * 0.175, -moveY * 0.175);
+        launch(-moveX * 0.18, -moveY * 0.18);
     };
 
     window.addEventListener('mousedown', onStart);
@@ -198,7 +194,7 @@
             });
 
             if(hit || curX > window.innerWidth || curY > window.innerHeight || curX < -100 || curY < -100) {
-                if(shots <= 0) { setTimeout(() => { alert('Challenge Complete! Score: ' + score); location.reload(); }, 600); }
+                if(shots <= 0) { setTimeout(() => { alert('Over! Score: ' + score); location.reload(); }, 600); }
                 else { isFlying = false; moveX = 0; moveY = 0; ball.style.transition = 'all 0.4s'; resetLayout(); }
             } else requestAnimationFrame(step);
         };
