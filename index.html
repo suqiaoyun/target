@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
-    <title>Elite Shooter Pro - Final Mobile Fix</title>
+    <title>Elite Shooter - Smooth & Steady</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -12,7 +12,6 @@
         #ball { position: absolute; width: 42px; height: 42px; background: radial-gradient(circle at 30% 30%, #3b82f6, #1d4ed8); border: 3px solid #fff; border-radius: 50%; z-index: 5000; box-shadow: 0 8px 15px rgba(29, 78, 216, 0.3); cursor: pointer; touch-action: none; }
         .bow-string { stroke: #334155; stroke-width: 5; fill: none; stroke-linecap: round; pointer-events: none; }
         
-        /* 靶子容器：彻底移除 CSS 中的 transform 居中逻辑 */
         #target-box { position: absolute; display: flex; flex-direction: column; gap: 4px; z-index: 100; will-change: transform; }
         .score-zone { background: white; display: flex; align-items: center; justify-content: center; font-weight: 900; box-shadow: 0 4px 10px rgba(0,0,0,0.06); border-radius: 6px; }
 
@@ -22,9 +21,8 @@
         }
 
         @media screen and (orientation: portrait) {
-            /* 手机端改用 left 定位，不再依赖 transform 居中 */
-            #target-box { top: 20%; left: 70%; width: 75px; height: 50%; margin-left: -37.5px; }
-            .score-zone { flex: 1; font-size: 0.9rem; border-left: 4px solid; }
+            #target-box { top: 20%; left: 75%; width: 80px; height: 50%; margin-left: -40px; }
+            .score-zone { flex: 1; font-size: 1rem; border-left: 4px solid; }
         }
 
         #center-pop { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); pointer-events: none; font-weight: 900; font-size: 100px; z-index: 6000; opacity: 0; display: none; }
@@ -96,17 +94,15 @@
         }
     };
 
-    // 🚀 核心逻辑：不再混用 TranslateX，只管位移数字
+    // 🚀 速度调整：speed 调低到 0.9 - 1.2 之间实现“慢速滑动”
     function animateTarget() {
         if (!active) return;
-        const speed = isL ? 1.0 : 1.0; 
-        const range = isL ? 150 : 100;
+        const speed = isL ? 1.0 : 0.8; 
+        const range = isL ? 160 : 110;
         targetY += speed * targetDir;
         if (Math.abs(targetY) > range) targetDir *= -1;
         
-        // 彻底简化的 Transform，不再受 CSS 干扰
         targetBox.style.transform = "translate3d(0, " + targetY + "px, 0)";
-        
         animId = requestAnimationFrame(animateTarget);
     }
 
@@ -127,7 +123,8 @@
         if(!active || isFlying) return;
         const p = getPos(e);
         const rect = ball.getBoundingClientRect();
-        if (Math.hypot(p.clientX - (rect.left + 21), p.clientY - (rect.top + 21)) < 85) {
+        // 增加判定范围到 90，让手感更灵敏
+        if (Math.hypot(p.clientX - (rect.left + 21), p.clientY - (rect.top + 21)) < 90) {
             dragging = true; startX = p.clientX; startY = p.clientY;
             ball.style.transition = 'none';
             if(e.cancelable) e.preventDefault();
@@ -138,7 +135,7 @@
         if(!dragging) return;
         const p = getPos(e);
         const dx = p.clientX - startX, dy = p.clientY - startY;
-        const dist = Math.hypot(dx, dy), limit = 100, ratio = Math.min(dist, limit) / (dist || 1);
+        const dist = Math.hypot(dx, dy), limit = 110, ratio = Math.min(dist, limit) / (dist || 1);
         moveX = dx * ratio; moveY = dy * ratio;
         ball.style.transform = `translate(${moveX}px, ${moveY}px)`;
         updateStrings(oX + 21 + moveX, oY + 21 + moveY);
@@ -148,14 +145,14 @@
     const onEnd = () => {
         if(!dragging) return;
         dragging = false; 
-        if (moveY > 85) { 
+        if (moveY > 90) { 
             moveX = 0; moveY = 0;
             ball.style.transition = 'all 0.3s';
             resetLayout(); return;
         }
         isFlying = true; shots--;
         document.getElementById('v-shots').innerText = shots;
-        launch(-moveX * 0.22, -moveY * 0.22);
+        launch(-moveX * 0.24, -moveY * 0.24); // 略微增加发射系数，让球更轻快
     };
 
     window.addEventListener('mousedown', onStart);
