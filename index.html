@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
-    <title>Target Elite - Vertical Mode</title>
+    <title>Target Elite - Universal Vertical</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -11,52 +11,54 @@
         #stage { height: 100%; width: 100%; position: relative; background-image: radial-gradient(#d1d5db 1.2px, transparent 1.2px); background-size: 30px 30px; }
         
         #ball { 
-            position: absolute; width: 46px; height: 46px; 
+            position: absolute; width: 44px; height: 44px; 
             background: radial-gradient(circle at 30% 30%, #60a5fa, #2563eb);
             border: 3px solid #fff; border-radius: 50%; z-index: 1000;
-            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+            box-shadow: 0 8px 15px rgba(37, 99, 235, 0.3);
         }
 
-        .bow-string { stroke: #1e293b; stroke-width: 5; fill: none; stroke-linecap: round; pointer-events: none; }
+        .bow-string { stroke: #1e293b; stroke-width: 4; fill: none; stroke-linecap: round; pointer-events: none; }
         
+        /* 居中大分数 */
         #center-pop {
             position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%);
-            pointer-events: none; font-weight: 900; font-size: 90px;
-            z-index: 5000; opacity: 0; display: none; text-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            pointer-events: none; font-weight: 900; font-size: 80px;
+            z-index: 5000; opacity: 0; display: none; text-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
-        .pop-animation { display: block !important; animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .pop-animation { display: block !important; animation: popIn 0.6s ease-out forwards; }
         @keyframes popIn {
-            0% { transform: translate(-50%, -50%) scale(0.4); opacity: 0; }
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
             40% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
             100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
         }
 
-        /* 📱 核心修复：手机竖屏下，靶子纵向垂直排列 */
-        @media screen and (orientation: portrait) {
-            #target-box { 
-                position: absolute; top: 15%; right: 10%; width: 30%; height: 60%;
-                display: flex; flex-direction: column; /* 纵向排列 */
-                justify-content: space-between; align-items: center; gap: 10px;
-            }
-            .score-zone { 
-                width: 100%; flex: 1; border-left: 6px solid; 
-                background: white; border-radius: 6px;
-                display: flex; align-items: center; justify-content: center; font-weight: 900;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.1); font-size: 1.2rem;
-            }
+        /* 靶子通用样式：强制垂直 */
+        #target-box { 
+            position: absolute; display: flex; flex-direction: column; justify-content: space-between; gap: 8px;
+        }
+        .score-zone { 
+            width: 100%; flex: 1; border-left: 6px solid; background: white; border-radius: 6px;
+            display: flex; align-items: center; justify-content: center; font-weight: 900;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.08); transition: transform 0.1s;
         }
 
-        /* 💻 横屏 */
+        /* 💻 电脑/横屏布局 */
         @media screen and (orientation: landscape) {
-            #target-box { width: 35%; height: 100%; flex-direction: column; align-items: flex-end; padding-right: 30px; right: 0; position: absolute; justify-content: center; gap: 8px; }
-            .score-zone { width: 80%; height: 40px; border-left: 8px solid; font-size: 1.1rem; background: white; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 900; }
+            #target-box { top: 15%; right: 5%; width: 120px; height: 70%; }
+            .score-zone { font-size: 1.2rem; }
+        }
+
+        /* 📱 手机/竖屏布局 */
+        @media screen and (orientation: portrait) {
+            #target-box { top: 15%; right: 8%; width: 80px; height: 55%; }
+            .score-zone { font-size: 1rem; }
         }
     </style>
 </head>
 <body>
 
-<header class="fixed top-0 w-full px-6 py-4 flex justify-between items-center z-[2000] bg-white/90 border-b">
-    <div class="font-black text-gray-300 text-[10px] tracking-widest uppercase">Elite Shooter</div>
+<header class="fixed top-0 w-full px-6 py-4 flex justify-between items-center z-[2000] bg-white/80 border-b">
+    <div class="font-black text-gray-400 text-[10px] tracking-widest uppercase">Target Elite</div>
     <div class="flex gap-4">
         <div class="text-right"><p class="text-[8px] text-gray-400">SHOTS</p><p id="v-shots" class="font-black text-xl">10</p></div>
         <div class="text-right"><p class="text-[8px] text-gray-400">SCORE</p><p id="v-score" class="font-black text-xl text-blue-600">0</p></div>
@@ -66,7 +68,7 @@
 <div id="stage">
     <div id="center-pop"></div>
     <div id="mask" class="absolute inset-0 z-[3000] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center">
-        <button onclick="initGame()" class="px-14 py-5 bg-blue-600 text-white rounded-2xl shadow-2xl font-black text-xl active:scale-90 transition-transform">PLAY</button>
+        <button onclick="initGame()" class="px-12 py-4 bg-blue-600 text-white rounded-xl shadow-2xl font-black text-xl active:scale-95 transition-transform">PLAY NOW</button>
     </div>
 
     <div id="target-box">
@@ -95,25 +97,25 @@
     const resetLayout = () => {
         const w = window.innerWidth, h = window.innerHeight;
         isL = w > h;
+        // 动态调整弹弓位置，避开垂直排布的靶子
         if (isL) {
-            oX = w * 0.18; oY = h * 0.5 - 23;
-            bow.setAttribute('d', `M ${w*0.1} ${h*0.3} Q ${w*0.18} ${h*0.5} ${w*0.1} ${h*0.7}`);
+            oX = w * 0.15; oY = h * 0.5 - 22;
+            bow.setAttribute('d', `M ${w*0.08} ${h*0.3} Q ${w*0.16} ${h*0.5} ${w*0.08} ${h*0.7}`);
         } else {
-            // 弹弓在底部，靶子在右侧
             oX = w * 0.25; oY = h * 0.82;
             bow.setAttribute('d', `M ${w*0.08} ${h*0.88} Q ${w*0.25} ${h*0.75} ${w*0.42} ${h*0.88}`);
         }
         if(!isFlying) {
             ball.style.left = oX + 'px'; ball.style.top = oY + 'px'; ball.style.transform = 'none';
-            updateStrings(oX + 23, oY + 23);
+            updateStrings(oX + 22, oY + 22);
         }
     };
 
     const updateStrings = (px, py) => {
         const w = window.innerWidth, h = window.innerHeight;
         if(isL) {
-            s1.setAttribute('d', `M ${w*0.1} ${h*0.3} L ${px} ${py}`);
-            s2.setAttribute('d', `M ${w*0.1} ${h*0.7} L ${px} ${py}`);
+            s1.setAttribute('d', `M ${w*0.08} ${h*0.3} L ${px} ${py}`);
+            s2.setAttribute('d', `M ${w*0.08} ${h*0.7} L ${px} ${py}`);
         } else {
             s1.setAttribute('d', `M ${w*0.08} ${h*0.88} L ${px} ${py}`);
             s2.setAttribute('d', `M ${w*0.42} ${h*0.88} L ${px} ${py}`);
@@ -121,7 +123,7 @@
     };
 
     function triggerPop(pts) {
-        centerPop.innerText = (pts > 0 ? '+' : '') + pts;
+        centerPop.innerText = (pts >= 0 ? '+' : '') + pts;
         centerPop.style.color = pts > 0 ? '#2563eb' : (pts < 0 ? '#ef4444' : '#64748b');
         centerPop.classList.remove('pop-animation');
         void centerPop.offsetWidth;
@@ -143,7 +145,7 @@
         if(!active || isFlying) return;
         const p = getPos(e);
         const rect = ball.getBoundingClientRect();
-        if (Math.hypot(p.clientX - (rect.left + 23), p.clientY - (rect.top + 23)) < 60) {
+        if (Math.hypot(p.clientX - (rect.left + 22), p.clientY - (rect.top + 22)) < 60) {
             dragging = true; startX = p.clientX; startY = p.clientY;
             ball.style.transition = 'none';
         }
@@ -156,7 +158,7 @@
         const dist = Math.hypot(dx, dy), limit = 110, ratio = Math.min(dist, limit) / (dist || 1);
         moveX = dx * ratio; moveY = dy * ratio;
         ball.style.transform = `translate(${moveX}px, ${moveY}px)`;
-        updateStrings(oX + 23 + moveX, oY + 23 + moveY);
+        updateStrings(oX + 22 + moveX, oY + 22 + moveY);
         if(e.cancelable) e.preventDefault();
     };
 
@@ -194,7 +196,7 @@
             });
 
             if(hit || curX > window.innerWidth || curY > window.innerHeight || curX < -100 || curY < -100) {
-                if(shots <= 0) { setTimeout(() => { alert('Total Score: ' + score); location.reload(); }, 600); }
+                if(shots <= 0) { setTimeout(() => { alert('Over! Final Score: ' + score); location.reload(); }, 600); }
                 else { isFlying = false; moveX = 0; moveY = 0; ball.style.transition = 'all 0.4s'; resetLayout(); }
             } else requestAnimationFrame(step);
         };
