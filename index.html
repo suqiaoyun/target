@@ -99,7 +99,7 @@
     // 🚀 核心逻辑：不再混用 TranslateX，只管位移数字
     function animateTarget() {
         if (!active) return;
-        const speed = isL ? 1.8 : 1.4; 
+        const speed = isL ? 1.0 : 1.0; 
         const range = isL ? 150 : 100;
         targetY += speed * targetDir;
         if (Math.abs(targetY) > range) targetDir *= -1;
