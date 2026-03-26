@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
-    <title>Elite Shooter - Precision 1/4</title>
+    <title>Elite Shooter Pro - Anti-Cheat</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -37,13 +37,11 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.06); transition: all 0.2s; border-radius: 6px;
         }
 
-        /* 💻 电脑端：更紧凑的距离 */
         @media screen and (orientation: landscape) {
             #target-box { top: 20%; right: 28%; width: 160px; height: 60%; }
             .score-zone { flex: 1; font-size: 1.4rem; border-left: 6px solid; }
         }
 
-        /* 📱 手机端：弓箭 1/4 处，靶子 3/4 处 */
         @media screen and (orientation: portrait) {
             #target-box { top: 18%; left: 80%; transform: translateX(-50%); width: 75px; height: 55%; }
             .score-zone { flex: 1; font-size: 0.9rem; border-left: 4px solid; }
@@ -93,11 +91,9 @@
         const w = window.innerWidth, h = window.innerHeight;
         isL = w > h;
         if (isL) {
-            // 电脑端：拉近距离
             oX = w * 0.20; oY = h * 0.5 - 21;
-            bow.setAttribute('d', `M ${w*0.38} ${h*0.3} Q ${w*0.48} ${h*0.5} ${w*0.38} ${h*0.7}`);
+            bow.setAttribute('d', `M ${w*0.12} ${h*0.3} Q ${w*0.22} ${h*0.5} ${w*0.12} ${h*0.7}`);
         } else {
-            // 手机端：1/4处设弓，高度向上移动至 50% 处
             oX = w * 0.25 - 21; oY = h * 0.5; 
             bow.setAttribute('d', `M ${w*0.08} ${h*0.35} Q ${w*0.25} ${h*0.5} ${w*0.08} ${h*0.65}`);
         }
@@ -110,8 +106,8 @@
     const updateStrings = (px, py) => {
         const w = window.innerWidth, h = window.innerHeight;
         if(isL) {
-            s1.setAttribute('d', `M ${w*0.38} ${h*0.3} L ${px} ${py}`);
-            s2.setAttribute('d', `M ${w*0.38} ${h*0.7} L ${px} ${py}`);
+            s1.setAttribute('d', `M ${w*0.12} ${h*0.3} L ${px} ${py}`);
+            s2.setAttribute('d', `M ${w*0.12} ${h*0.7} L ${px} ${py}`);
         } else {
             s1.setAttribute('d', `M ${w*0.08} ${h*0.35} L ${px} ${py}`);
             s2.setAttribute('d', `M ${w*0.08} ${h*0.65} L ${px} ${py}`);
@@ -137,7 +133,7 @@
     let startX, startY, moveX = 0, moveY = 0, dragging = false;
     const getPos = (e) => (e.touches && e.touches[0]) || e;
 
-    const onStart = (e) => {
+    window.addEventListener('mousedown', (e) => {
         if(!active || isFlying) return;
         const p = getPos(e);
         const rect = ball.getBoundingClientRect();
@@ -145,9 +141,9 @@
             dragging = true; startX = p.clientX; startY = p.clientY;
             ball.style.transition = 'none';
         }
-    };
+    });
 
-    const onMove = (e) => {
+    window.addEventListener('mousemove', (e) => {
         if(!dragging) return;
         const p = getPos(e);
         const dx = p.clientX - startX, dy = p.clientY - startY;
@@ -156,40 +152,72 @@
         ball.style.transform = `translate(${moveX}px, ${moveY}px)`;
         updateStrings(oX + 21 + moveX, oY + 21 + moveY);
         if(e.cancelable) e.preventDefault();
-    };
+    }, {passive: false});
 
-    const onEnd = () => {
+    window.addEventListener('mouseup', () => {
         if(!dragging) return;
+        // 漏洞防御：如果向下拖拽幅度过大，判定为无效操作（防止直接从底部平射偷分）
+        if (moveY > 80) {
+            dragging = false; moveX = 0; moveY = 0;
+            ball.style.transition = 'all 0.3s';
+            resetLayout();
+            return;
+        }
         dragging = false; isFlying = true; shots--;
         document.getElementById('v-shots').innerText = shots;
-        launch(-moveX * 0.18, -moveY * 0.18);
-    };
+        launch(-moveX * 0.22, -moveY * 0.22);
+    });
 
-    window.addEventListener('mousedown', onStart);
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onEnd);
-    window.addEventListener('touchstart', onStart, {passive: false});
-    window.addEventListener('touchmove', onMove, {passive: false});
-    window.addEventListener('touchend', onEnd);
+    // 移动端兼容
+    window.addEventListener('touchstart', (e) => {
+        if(!active || isFlying) return;
+        const p = getPos(e);
+        const rect = ball.getBoundingClientRect();
+        if (Math.hypot(p.clientX - (rect.left + 21), p.clientY - (rect.top + 21)) < 60) {
+            dragging = true; startX = p.clientX; startY = p.clientY;
+            ball.style.transition = 'none';
+        }
+    }, {passive: false});
+    window.addEventListener('touchmove', (e) => {
+        if(!dragging) return;
+        const p = getPos(e);
+        const dx = p.clientX - startX, dy = p.clientY - startY;
+        const dist = Math.hypot(dx, dy), limit = 100, ratio = Math.min(dist, limit) / (dist || 1);
+        moveX = dx * ratio; moveY = dy * ratio;
+        ball.style.transform = `translate(${moveX}px, ${moveY}px)`;
+        updateStrings(oX + 21 + moveX, oY + 21 + moveY);
+        if(e.cancelable) e.preventDefault();
+    }, {passive: false});
+    window.addEventListener('touchend', () => {
+        if(!dragging) return;
+        if (moveY > 80) { dragging = false; moveX = 0; moveY = 0; ball.style.transition = 'all 0.3s'; resetLayout(); return; }
+        dragging = false; isFlying = true; shots--;
+        document.getElementById('v-shots').innerText = shots;
+        launch(-moveX * 0.22, -moveY * 0.22);
+    });
 
     function launch(vx, vy) {
         let curX = oX, curY = oY;
         const step = () => {
-            vy += 0.01; curX += vx; curY += vy;
+            vy += 0.015; curX += vx; curY += vy;
             ball.style.left = curX + 'px'; ball.style.top = curY + 'px';
             ball.style.transform = 'none';
             const bR = ball.getBoundingClientRect();
             let hit = false;
             const targets = document.querySelectorAll('.score-zone');
+            
             for(let z of targets) {
                 const zR = z.getBoundingClientRect();
+                // 漏洞防御核心：检测碰撞 + 必须是从左往右撞击靶子的正面
                 if(bR.right > zR.left && bR.left < zR.right && bR.bottom > zR.top && bR.top < zR.bottom) {
-                    const pts = parseInt(z.dataset.pts);
-                    score += pts;
-                    document.getElementById('v-score').innerText = score;
-                    triggerPop(pts);
-                    hit = true;
-                    break; 
+                    if (bR.left + 21 < zR.left + 15) { // 球心必须在靶子边缘左侧
+                        const pts = parseInt(z.dataset.pts);
+                        score += pts;
+                        document.getElementById('v-score').innerText = score;
+                        triggerPop(pts);
+                        hit = true;
+                        break; 
+                    }
                 }
             }
 
