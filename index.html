@@ -94,10 +94,10 @@
         }
     };
 
-    // 🚀 速度调整：speed 调低到 0.9 - 1.2 之间实现“慢速滑动”
+    // 🚀 速度调整：speed 调低到 0.2 - 0.5 之间实现“慢速滑动”
     function animateTarget() {
         if (!active) return;
-        const speed = isL ? 1.0 : 0.8; 
+        const speed = isL ? 0.2 : 0.5; 
         const range = isL ? 160 : 110;
         targetY += speed * targetDir;
         if (Math.abs(targetY) > range) targetDir *= -1;
