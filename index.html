@@ -2,91 +2,82 @@
 <html lang="zh-CN">
 <head>
     <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
-    <title>Elite Shooter - Pure Edition</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
+    <title>Elite Shooter - Precision Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-family: 'Roboto', sans-serif; background: #f8fafc; overflow: hidden; touch-action: none; -webkit-user-select: none; margin: 0; position: fixed; width: 100%; height: 100%; }
-        #stage { height: 100%; width: 100%; position: relative; background-image: radial-gradient(#e2e8f0 1.5px, transparent 1.5px); background-size: 40px 40px; }
+        #stage { height: 100%; width: 100%; position: relative; background-image: radial-gradient(#e2e8f0 1.2px, transparent 1.2px); background-size: 30px 30px; }
         
         #ball { 
-            position: absolute; width: 44px; height: 44px; 
+            position: absolute; width: 42px; height: 42px; 
             background: radial-gradient(circle at 30% 30%, #3b82f6, #1d4ed8);
             border: 3px solid #fff; border-radius: 50%; z-index: 1000;
-            box-shadow: 0 10px 20px rgba(29, 78, 216, 0.3);
+            box-shadow: 0 8px 15px rgba(29, 78, 216, 0.3);
         }
 
         .bow-string { stroke: #334155; stroke-width: 5; fill: none; stroke-linecap: round; pointer-events: none; }
         
-        /* 居中大分数跳出效果 */
         #center-pop {
             position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%);
-            pointer-events: none; font-weight: 900; font-size: 110px;
-            z-index: 5000; opacity: 0; display: none;
-            text-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            pointer-events: none; font-weight: 900; font-size: 100px;
+            z-index: 5000; opacity: 0; display: none; text-shadow: 0 5px 25px rgba(0,0,0,0.1);
         }
-        .pop-animation { display: block !important; animation: scorePop 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .pop-animation { display: block !important; animation: scorePop 0.6s ease-out forwards; }
         @keyframes scorePop {
-            0% { transform: translate(-50%, -50%) scale(0.3); opacity: 0; }
+            0% { transform: translate(-50%, -50%) scale(0.4); opacity: 0; }
             40% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
             100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
         }
 
-        /* 靶子基础样式 */
-        #target-box { position: absolute; display: flex; justify-content: space-between; gap: 8px; z-index: 100; }
+        #target-box { position: absolute; display: flex; flex-direction: column; gap: 5px; z-index: 100; }
         .score-zone { 
-            width: 100%; flex: 1; border-radius: 8px; background: white; 
-            display: flex; align-items: center; justify-content: center; font-weight: 900;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.06); transition: all 0.2s;
+            background: white; display: flex; align-items: center; justify-content: center; font-weight: 900;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.06); transition: all 0.2s; border-radius: 6px;
         }
 
-        /* 💻 电脑/横屏布局：统统垂直排开，靠得更近 */
+        /* 💻 电脑端：间距近，垂直排布 */
         @media screen and (orientation: landscape) {
-            #target-box { top: 25%; right: 35%; width: 220px; height: 50%; flex-direction: column; }
-            .score-zone { font-size: 1.4rem; border-left: 8px solid; }
-            #v-header { padding: 15px 30px; }
-            #start-btn-text { font-size: 1.3rem; }
+            #target-box { top: 20%; right: 25%; width: 180px; height: 60%; }
+            .score-zone { flex: 1; font-size: 1.5rem; border-left: 8px solid; }
         }
 
-        /* 📱 手机/竖屏布局：彻底遵循草图，从左到右横向一字排开 */
+        /* 📱 手机端：1/4处设弓，3/4处设靶，向上移动 */
         @media screen and (orientation: portrait) {
-            #target-box { top: 15%; left: 5%; width: 90%; height: 30%; flex-direction: row; flex-wrap: nowrap; }
-            .score-zone { font-size: 11px; border-bottom: 5px solid; }
-            #v-header { padding: 10px 15px; }
-            #mask { background: rgba(226, 232, 240, 0.9); backdrop-blur: 5px; }
-            #start-btn-text { font-size: 1.1rem; }
+            #target-box { top: 15%; left: 75%; transform: translateX(-50%); width: 80px; height: 50%; }
+            .score-zone { flex: 1; font-size: 1rem; border-left: 5px solid; }
         }
     </style>
 </head>
 <body>
 
-<header id="v-header" class="fixed top-0 w-full flex justify-between items-center z-[2000] bg-white/70 backdrop-blur-md border-b">
+<header class="fixed top-0 w-full px-6 py-4 flex justify-between items-center z-[2000] bg-white/70 backdrop-blur-md border-b">
     <div class="font-black text-slate-300 text-[10px] tracking-widest uppercase">Elite Shooter</div>
     <div class="flex gap-4">
-        <div class="text-right"><p class="text-[8px] text-slate-400 uppercase">Shots</p><p id="v-shots" class="font-black text-xl text-slate-800">10</p></div>
-        <div class="text-right"><p class="text-[8px] text-slate-400 uppercase">Score</p><p id="v-score" class="font-black text-xl text-blue-600">0</p></div>
+        <div class="text-right"><p class="text-[8px] text-slate-400">SHOTS</p><p id="v-shots" class="font-black text-xl">10</p></div>
+        <div class="text-right"><p class="text-[8px] text-slate-400">SCORE</p><p id="v-score" class="font-black text-xl text-blue-600">0</p></div>
     </div>
 </header>
 
 <div id="stage">
     <div id="center-pop"></div>
-
-    <div id="mask" class="absolute inset-0 z-[3000] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center">
-        <button onclick="initGame()" class="px-12 py-5 bg-blue-600 text-white rounded-2xl shadow-2xl font-black active:scale-95 transition-all">
-            <span id="start-btn-text">START</span>
-        </button>
+    <div id="mask" class="absolute inset-0 z-[3000] bg-slate-900/40 backdrop-blur-sm flex items-center justify-center">
+        <button onclick="initGame()" class="px-14 py-4 bg-blue-600 text-white rounded-xl shadow-2xl font-black text-xl active:scale-95 transition-all">START</button>
     </div>
 
     <div id="target-box">
         <div class="score-zone border-rose-500 text-rose-600" data-pts="100">100</div>
         <div class="score-zone border-slate-600 text-slate-700" data-pts="-10">-10</div>
         <div class="score-zone border-amber-500 text-amber-600" data-pts="90">90</div>
-        <div class="score-zone border-red-400 text-red-500" data-pts="-5">-5</div>
+        <div class="score-zone border-red-500 text-red-500" data-pts="-5">-5</div>
+        <div class="score-zone border-emerald-500 text-emerald-600" data-pts="75">75</div>
+        <div class="score-zone border-slate-300 text-slate-400" data-pts="0">0</div>
+        <div class="score-zone border-blue-500 text-blue-600" data-pts="50">50</div>
     </div>
 
     <svg class="absolute inset-0 w-full h-full pointer-events-none">
-        <path id="bow-svg-line" stroke="#cbd5e1" stroke-width="8" fill="none" stroke-linecap="round" />
+        <path id="bow" stroke="#cbd5e1" stroke-width="8" fill="none" stroke-linecap="round" />
         <path id="s1" class="bow-string" />
         <path id="s2" class="bow-string" />
     </svg>
@@ -95,43 +86,35 @@
 </div>
 
 <script>
-    const ball = document.getElementById('ball'), s1 = document.getElementById('s1'), s2 = document.getElementById('s2'), bowSvgLine = document.getElementById('bow-svg-line'), centerPop = document.getElementById('center-pop');
+    const ball = document.getElementById('ball'), s1 = document.getElementById('s1'), s2 = document.getElementById('s2'), bow = document.getElementById('bow'), centerPop = document.getElementById('center-pop');
     let score = 0, shots = 10, isFlying = false, active = false, oX, oY, isL = false;
 
     const resetLayout = () => {
         const w = window.innerWidth, h = window.innerHeight;
         isL = w > h;
-        // 动态调整弹弓位置，遵循草图：底部中心，空隙近
         if (isL) {
-            oX = w * 0.15; oY = h * 0.5 - 23;
-            bowSvgLine.style.display = 'none';
+            // 电脑端：更紧凑的距离
+            oX = w * 0.4; oY = h * 0.5 - 21;
+            bow.setAttribute('d', `M ${w*0.32} ${h*0.3} Q ${w*0.42} ${h*0.5} ${w*0.32} ${h*0.7}`);
         } else {
-            oX = w * 0.5 - 23; oY = h * 0.9;
-            bowSvgLine.style.display = 'none';
+            // 手机端：弓在 1/4 处，位置上移
+            oX = w * 0.25 - 21; oY = h * 0.7; 
+            bow.setAttribute('d', `M ${w*0.1} ${h*0.55} Q ${w*0.25} ${h*0.7} ${w*0.1} ${h*0.85}`);
         }
         if(!isFlying) {
             ball.style.left = oX + 'px'; ball.style.top = oY + 'px'; ball.style.transform = 'none';
-            // 手机版弓弦固定点在底部两侧
-            const wS = window.innerWidth, hS = window.innerHeight;
-            if(isL) {
-                s1.setAttribute('d', `M ${wS*0.08} ${hS*0.3} L ${oX+23} ${oY+23}`);
-                s2.setAttribute('d', `M ${wS*0.08} ${hS*0.7} L ${oX+23} ${oY+23}`);
-            } else {
-                s1.setAttribute('d', `M ${oX - wS*0.35 + 23} ${oY+23} L ${oX+23} ${oY+23}`);
-                s2.setAttribute('d', `M ${oX + wS*0.35 + 23} ${oY+23} L ${oX+23} ${oY+23}`);
-            }
+            updateStrings(oX + 21, oY + 21);
         }
     };
 
     const updateStrings = (px, py) => {
         const w = window.innerWidth, h = window.innerHeight;
         if(isL) {
-            s1.setAttribute('d', `M ${w*0.08} ${h*0.3} L ${px} ${py}`);
-            s2.setAttribute('d', `M ${w*0.08} ${h*0.7} L ${px} ${py}`);
+            s1.setAttribute('d', `M ${w*0.32} ${h*0.3} L ${px} ${py}`);
+            s2.setAttribute('d', `M ${w*0.32} ${h*0.7} L ${px} ${py}`);
         } else {
-            // 手机版弧形弓弦效果
-            s1.setAttribute('d', `M ${oX - w*0.35 + 23} ${oY+23} L ${px} ${py}`);
-            s2.setAttribute('d', `M ${oX + w*0.35 + 23} ${oY+23} L ${px} ${py}`);
+            s1.setAttribute('d', `M ${w*0.1} ${h*0.55} L ${px} ${py}`);
+            s2.setAttribute('d', `M ${w*0.1} ${h*0.85} L ${px} ${py}`);
         }
     };
 
@@ -139,7 +122,7 @@
         centerPop.innerText = (pts >= 0 ? '+' : '') + pts;
         centerPop.style.color = pts > 0 ? '#3b82f6' : (pts < 0 ? '#ef4444' : '#64748b');
         centerPop.classList.remove('pop-animation');
-        void centerPop.offsetWidth; // 触发重绘
+        void centerPop.offsetWidth;
         centerPop.classList.add('pop-animation');
     }
 
@@ -158,7 +141,7 @@
         if(!active || isFlying) return;
         const p = getPos(e);
         const rect = ball.getBoundingClientRect();
-        if (Math.hypot(p.clientX - (rect.left + 23), p.clientY - (rect.top + 23)) < 60) {
+        if (Math.hypot(p.clientX - (rect.left + 21), p.clientY - (rect.top + 21)) < 60) {
             dragging = true; startX = p.clientX; startY = p.clientY;
             ball.style.transition = 'none';
         }
@@ -168,10 +151,10 @@
         if(!dragging) return;
         const p = getPos(e);
         const dx = p.clientX - startX, dy = p.clientY - startY;
-        const dist = Math.hypot(dx, dy), limit = 110, ratio = Math.min(dist, limit) / (dist || 1);
+        const dist = Math.hypot(dx, dy), limit = 100, ratio = Math.min(dist, limit) / (dist || 1);
         moveX = dx * ratio; moveY = dy * ratio;
         ball.style.transform = `translate(${moveX}px, ${moveY}px)`;
-        updateStrings(oX + 23 + moveX, oY + 23 + moveY);
+        updateStrings(oX + 21 + moveX, oY + 21 + moveY);
         if(e.cancelable) e.preventDefault();
     };
 
@@ -179,7 +162,7 @@
         if(!dragging) return;
         dragging = false; isFlying = true; shots--;
         document.getElementById('v-shots').innerText = shots;
-        launch(-moveX * 0.175, -moveY * 0.175);
+        launch(-moveX * 0.18, -moveY * 0.18);
     };
 
     window.addEventListener('mousedown', onStart);
@@ -192,7 +175,7 @@
     function launch(vx, vy) {
         let curX = oX, curY = oY;
         const step = () => {
-            vy += 0.009; curX += vx; curY += vy;
+            vy += 0.01; curX += vx; curY += vy;
             ball.style.left = curX + 'px'; ball.style.top = curY + 'px';
             ball.style.transform = 'none';
             const bR = ball.getBoundingClientRect();
@@ -210,7 +193,7 @@
 
             if(hit || curX > window.innerWidth || curY > window.innerHeight || curX < -100 || curY < -100) {
                 if(shots <= 0) { setTimeout(() => { alert('游戏结束！总分：' + score); location.reload(); }, 600); }
-                else { isFlying = false; moveX = 0; moveY = 0; ball.style.transition = 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'; resetLayout(); }
+                else { isFlying = false; moveX = 0; moveY = 0; ball.style.transition = 'all 0.4s'; resetLayout(); }
             } else requestAnimationFrame(step);
         };
         requestAnimationFrame(step);
