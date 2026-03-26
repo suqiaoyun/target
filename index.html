@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>TARGET ELITE - 灵动 Google 风</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --g-blue: #4285F4; --g-red: #EA4335; --g-yellow: #FBBC05; --g-green: #34A853;
+            --g-gray: #5f6368; --bg-gray: #f8f9fa;
+        }
+        body { font-family: 'Roboto', sans-serif; background-color: var(--bg-gray); color: #202124; overflow: hidden; }
+        
+        /* 1. 舞台背景网格 - 增加空间感 */
+        #stage {
+            background-image: radial-gradient(#dadce0 1px, transparent 1px);
+            background-size: 40px 40px;
+            background-position: center;
+        }
+
+        /* 2. 灵巧箭靶 - 增加呼吸感 */
+        #projectile {
+            cursor: grab;
+            background: radial-gradient(circle at 30% 30%, #669df6, var(--g-blue));
+            border: 2px solid #fff;
+            box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3);
+            border-radius: 50%;
+            z-index: 100;
+            will-change: transform, left, top;
+        }
+        #projectile:active { cursor: grabbing; transform: scale(1.1); }
+        #projectile.locked { cursor: not-allowed; filter: grayscale(1) opacity(0.5); }
+
+        /* 3. 动态皮筋与弓身 */
+        .bow-handle { fill: #bdc1c6; }
+        .bow-arm { fill: #f1f3f4; stroke: #dadce0; stroke-width: 2; }
+        .slingshot-band { stroke: #202124; stroke-linecap: round; fill: none; transition: stroke-width 0.1s; }
+
+        /* 4. 谷歌风格目标 - 悬浮动效 */
+        .score-zone {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background-color: rgba(255,255,255,0.9);
+            border: 1px solid #dadce0;
+        }
+        .score-zone:hover { transform: translateX(-10px) scale(1.02); box-shadow: -5px 5px 15px rgba(0,0,0,0.1); }
+        
+        .zone-100 { border-left: 8px solid var(--g-red); color: var(--g-red); width: 140px; height: 64px; }
+        .zone-90 { border-left: 8px solid var(--g-yellow); color: var(--g-yellow); width: 180px; height: 64px; }
+        .zone-75 { border-left: 8px solid var(--g-green); color: var(--g-green); width: 220px; height: 64px; }
+        .zone-50 { border-left: 8px solid var(--g-blue); color: var(--g-blue); width: 260px; height: 64px; }
+        .zone-gray { border-left: 8px solid var(--g-gray); color: var(--g-gray); width: 300px; height: 64px; }
+
+        /* 5. 动感滚动分数 (老虎机效果) */
+        #score-roller {
+            display: inline-flex;
+            flex-direction: column;
+            height: 48px; /* 一行数字的高度 */
+            overflow: hidden;
+            will-change: transform;
+        }
+        .score-digit {
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 3rem;
+            color: var(--g-blue);
+            transition: transform 0.15s cubic-bezier(0, 0, 0.2, 1);
+        }
+
+        /* 6. 飘逸的得分弹出 */
+        .score-popup { animation: floatUp 1s cubic-bezier(0.22, 1, 0.36, 1) forwards; pointer-events: none; }
+        @keyframes floatUp {
+            0% { opacity: 0; transform: translateY(20px) scale(0.5); }
+            20% { opacity: 1; transform: translateY(0) scale(1.2); }
+            100% { opacity: 0; transform: translateY(-120px) scale(1); }
+        }
+
+        /* 7. 结算蒙层与巨型居中按钮 */
+        #overlay { background: rgba(248, 249, 250, 0.9); backdrop-blur: 8px; transition: all 0.5s ease-out; }
+        
+        /* 巨型居中 START 按钮 */
+        #big-start-btn {
+            width: 240px; h-height: 240px;
+            background-color: var(--g-blue);
+            border-radius: 50%;
+            border: 10px solid #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 16px 40px rgba(66, 133, 244, 0.3);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: breathe 3s ease-in-out infinite;
+            cursor: pointer;
+        }
+        #big-start-btn:hover { transform: scale(1.05); box-shadow: 0 20px 50px rgba(66, 133, 244, 0.4); }
+        #big-start-btn.hide { transform: scale(0) rotate(180deg); opacity: 0; }
+        
+        @keyframes breathe {
+            0%, 100% { box-shadow: 0 16px 40px rgba(66, 133, 244, 0.3); }
+            50% { box-shadow: 0 16px 60px rgba(66, 133, 244, 0.6); }
+        }
+
+        /* 8. 弓箭系统和得分区滑入滑出动效 */
+        #shooter-section { transform: translateX(-100%); opacity: 0; transition: all 0.6s cubic-bezier(0.19, 1, 0.22, 1); }
+        #target-area { transform: translateX(100%); opacity: 0; transition: all 0.6s cubic-bezier(0.19, 1, 0.22, 1); }
+        
+        #stage.active #shooter-section { transform: translateX(0); opacity: 1; }
+        #stage.active #target-area { transform: translateX(0); opacity: 1; }
+
+        .g-card { background: white; box-shadow: 0 1px 2px rgba(60,64,67,0.3), 0 2px 6px 2px rgba(60,64,67,0.15); border-radius: 24px; }
+    </style>
+</head>
+<body class="overflow-hidden">
+
+<header class="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md flex justify-between items-center px-12 py-5 border-b border-gray-200">
+    <div class="flex items-center gap-6">
+        <h1 class="text-2xl font-medium text-gray-600">Target <span class="font-bold text-gray-900">Elite</span></h1>
+        </div>
+    
+    <div class="flex items-center gap-10">
+        <div class="flex flex-col items-center">
+            <span class="text-[10px] uppercase tracking-widest text-gray-400 font-bold">Attempts</span>
+            <span id="shots-val" class="text-2xl font-black text-gray-700">10</span>
+        </div>
+        <div class="h-10 w-[1px] bg-gray-200"></div>
+        <div class="flex flex-col items-end">
+            <span class="text-[10px] uppercase tracking-widest text-gray-400 font-bold">Total Score</span>
+            <div id="score-roller">
+                <div class="score-digit">0</div><div class="score-digit">1</div><div class="score-digit">2</div><div class="score-digit">3</div><div class="score-digit">4</div>
+                <div class="score-digit">5</div><div class="score-digit">6</div><div class="score-digit">7</div><div class="score-digit">8</div><div class="score-digit">9</div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="h-screen w-full flex items-center justify-center p-8 pt-24">
+    <div id="stage" class="relative w-full h-full max-w-7xl aspect-[21/9] bg-white rounded-[2.5rem] shadow-lg border border-gray-200 overflow-hidden flex items-center">
+        
+        <div id="overlay" class="absolute inset-0 z-[200] flex items-center justify-center">
+            
+            <div id="big-start-btn" onclick="startGame()">
+                <span class="text-white font-black text-6xl tracking-tighter">START</span>
+            </div>
+
+            <div id="result-card" class="hidden g-card p-12 text-center transform transition-all duration-500">
+                <p class="text-gray-500 uppercase tracking-widest font-bold mb-2">Final Performance</p>
+                <h2 id="final-score" class="text-8xl font-black text-gray-900 mb-8">0</h2>
+                <button onclick="startGame()" class="px-12 py-4 bg-green-600 text-white rounded-full font-bold text-lg hover:bg-green-700 shadow-md transition-all active:scale-95">Try Again</button>
+            </div>
+        </div>
+
+        <div class="w-1/2 h-full relative" id="shooter-section">
+            <svg class="absolute inset-0 w-full h-full pointer-events-none">
+                <rect class="bow-handle" x="420" y="320" width="10" height="180" rx="5" />
+                <path class="bow-arm" d="M 425 320 C 425 300, 360 280, 360 250" />
+                <path class="bow-arm" d="M 425 500 C 425 520, 360 540, 360 570" />
+                <path id="band-1" class="slingshot-band" d="M 360 250 Q 420 410 420 410" stroke-width="5" />
+                <path id="band-2" class="slingshot-band" d="M 360 570 Q 420 410 420 410" stroke-width="5" />
+            </svg>
+            <div id="projectile" class="absolute w-12 h-12" style="left: 396px; top: 386px;"></div>
+        </div>
+
+        <div class="w-1/2 h-full flex flex-col items-end justify-center gap-4 pr-20" id="target-area">
+            <div class="score-zone zone-100 rounded-l-xl speed-fast" data-pts="100"><span class="font-black text-2xl">100</span></div>
+            <div class="score-zone zone-90 rounded-l-xl speed-fast" data-pts="90"><span class="font-black text-2xl">90</span></div>
+            <div class="score-zone zone-75 rounded-l-xl speed-med" data-pts="75"><span class="font-black text-2xl">75</span></div>
+            <div class="score-zone zone-50 rounded-l-xl speed-med" data-pts="50"><span class="font-black text-2xl">50</span></div>
+            <div class="score-zone zone-gray rounded-l-xl speed-slow" data-pts="25"><span class="font-black text-2xl">25</span></div>
+        </div>
+    </div>
+</main>
+
+<script>
+    const projectile = document.getElementById('projectile');
+    const stage = document.getElementById('stage');
+    const overlay = document.getElementById('overlay');
+    const resultCard = document.getElementById('result-card');
+    const bigStartBtn = document.getElementById('big-start-btn');
+    const band1 = document.getElementById('band-1');
+    const band2 = document.getElementById('band-2');
+    const scoreRoller = document.getElementById('score-roller');
+    const shotsVal = document.getElementById('shots-val');
+
+    let gameActive = false, totalScore = 0, shotsLeft = 10, isFlying = false;
+    const originX = 396, originY = 386;
+
+    // 分数滚轮逻辑
+    const rollerDigits = document.querySelectorAll('.score-digit');
+    function updateRoller(newScore) {
+        // 将分数转换为字符串，补足到3位 (例如 "001", "123")
+        const scoreStr = newScore.toString().padStart(3, '0').slice(-3);
+        
+        // 分别滚动百位、十位、个位
+        for (let i = 0; i < 3; i++) {
+            const digit = parseInt(scoreStr[i]);
+            const targetRoller = document.getElementById(`roller-${i}`);
+            if (targetRoller) {
+                targetRoller.style.transform = `translateY(-${digit * 48}px)`;
+            }
+        }
+    }
+    
+    // 初始化滚轮 HTML
+    scoreRoller.innerHTML = '';
+    for (let i = 0; i < 3; i++) { // 百、十、个
+        const digitRoller = document.createElement('div');
+        digitRoller.className = 'score-roller-digit';
+        digitRoller.id = `roller-${i}`;
+        digitRoller.style.display = 'inline-flex';
+        digitRoller.style.flexDirection = 'column';
+        digitRoller.style.transition = 'transform 0.4s cubic-bezier(0, 0, 0.2, 1)';
+        for (let j = 0; j < 10; j++) {
+            const d = document.createElement('div');
+            d.className = 'score-digit';
+            d.style.height = '48px';
+            d.style.display = 'flex'; d.style.alignItems = 'center'; d.style.justifyContent = 'center';
+            d.style.fontWeight = '900'; d.style.fontSize = '3rem'; d.style.color = '#4285F4';
+            d.innerText = j;
+            digitRoller.appendChild(d);
+        }
+        scoreRoller.appendChild(digitRoller);
+    }
+
+    function startGame() {
+        gameActive = true; totalScore = 0; shotsLeft = 10;
+        updateRoller(0);
+        shotsVal.innerText = '10';
+        isFlying = false;
+        
+        // 开场动画
+        bigStartBtn.classList.add('hide');
+        setTimeout(() => {
+            overlay.style.opacity = '0';
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                bigStartBtn.classList.remove('hide'); // 复原按钮状态供下次使用
+            }, 500);
+            
+            // 滑入弓箭和得分区
+            stage.classList.add('active');
+        }, 300);
+
+        projectile.classList.remove('locked');
+        resetProjectile();
+    }
+
+    // 拖拽逻辑
+    let isDragging = false, startX, startY, curX = 0, curY = 0;
+    projectile.onmousedown = (e) => {
+        if (!gameActive || isFlying) return;
+        isDragging = true;
+        startX = e.clientX; startY = e.clientY;
+        projectile.style.transition = 'none';
+        
+        // 拉动时加一个微弱的光晕
+        projectile.style.boxShadow = 'inset 0 -3px 5px rgba(0,0,0,0.1), 0 10px 25px rgba(0,0,0,0.25)';
+    };
+
+    window.onmousemove = (e) => {
+        if (!isDragging) return;
+        const dx = e.clientX - startX, dy = e.clientY - startY;
+        
+        // 限制拉动距离，并增加一点阻力感
+        const limit = 220, dist = Math.sqrt(dx*dx + dy*dy), ratio = Math.min(dist, limit) / dist;
+        curX = dx * ratio; curY = dy * ratio;
+        projectile.style.transform = `translate(${curX}px, ${curY}px)`;
+        
+        // 动态皮筋：拉得越长皮筋越细
+        const bWidth = Math.max(2, 5 - (dist/limit) * 3);
+        band1.style.strokeWidth = band2.style.strokeWidth = bWidth;
+
+        const px = originX + curX + 24, py = originY + curY + 24;
+        // 优化贝塞尔曲线锚点位置，让皮筋拉动更自然
+        band1.setAttribute('d', `M 360 250 Q ${px-20} ${py} ${px} ${py}`);
+        band2.setAttribute('d', `M 360 570 Q ${px-20} ${py} ${px} ${py}`);
+    };
+
+    window.onmouseup = () => {
+        if (!isDragging) return;
+        isDragging = false; isFlying = true;
+        
+        // 复原靶子阴影和皮筋厚度
+        projectile.style.boxShadow = '0 4px 12px rgba(66, 133, 244, 0.3)';
+        band1.style.strokeWidth = band2.style.strokeWidth = 5;
+
+        shotsLeft--; shotsVal.innerText = shotsLeft;
+        launch(-curX * 16, -curY * 16); 
+        
+        // 皮筋回弹动效
+        band1.style.transition = 'all 0.1s ease-out';
+        band2.style.transition = 'all 0.1s ease-out';
+        resetBands();
+    };
+
+    function launch(vx, vy) {
+        let x = originX + curX, y = originY + curY, v_x = vx, v_y = vy, g = 0.6;
+        function step() {
+            v_y += g;
+            // 空气阻力
+            v_x *= 0.995; 
+            x += v_x * 0.016; y += v_y * 0.016;
+            
+            projectile.style.left = x + 'px';
+            projectile.style.top = y + 'px';
+            projectile.style.transform = `rotate(${v_y * 0.5}deg)`;
+
+            const projRect = projectile.getBoundingClientRect();
+            const zones = document.querySelectorAll('.score-zone');
+            let hit = false;
+
+            for (let zone of zones) {
+                const zRect = zone.getBoundingClientRect();
+                if (projRect.right > zRect.left + 10 && projRect.left < zRect.right - 10 &&
+                    projRect.bottom > zRect.top + 5 && projRect.top < zRect.bottom - 5) {
+                    hitScore(parseInt(zone.getAttribute('data-pts')), zRect);
+                    hit = true; break;
+                }
+            }
+
+            if (hit || x > stage.offsetWidth || y > stage.offsetHeight || x < -100) {
+                if (shotsLeft <= 0) setTimeout(endGame, 600);
+                else resetProjectile();
+            } else { requestAnimationFrame(step); }
+        }
+        requestAnimationFrame(step);
+    }
+
+    function hitScore(pts, rect) {
+        totalScore += pts; 
+        updateRoller(totalScore); // 滚动分数
+
+        const pop = document.createElement('div');
+        pop.className = 'absolute font-black score-popup z-[110] text-7xl';
+        pop.style.left = (rect.left - stage.getBoundingClientRect().left) + 'px';
+        pop.style.top = (rect.top - stage.getBoundingClientRect().top) + 'px';
+        pop.style.color = pts === 100 ? '#EA4335' : (pts >= 75 ? '#34A853' : '#4285F4');
+        pop.innerText = `+${pts}`;
+        stage.appendChild(pop);
+        setTimeout(() => pop.remove(), 1000);
+    }
+
+    function resetProjectile() {
+        isFlying = false; curX = 0; curY = 0;
+        // 极具灵巧感的弹性回位
+        projectile.style.transition = 'all 0.7s cubic-bezier(0.19, 1, 0.22, 1)';
+        projectile.style.left = originX + 'px';
+        projectile.style.top = originY + 'px';
+        projectile.style.transform = 'rotate(0deg)';
+    }
+
+    function resetBands() {
+        band1.setAttribute('d', `M 360 250 Q 420 410 420 410`);
+        band2.setAttribute('d', `M 360 570 Q 420 410 420 410`);
+    }
+
+    function endGame() {
+        gameActive = false;
+        overlay.style.display = 'flex';
+        setTimeout(() => overlay.style.opacity = '1', 10);
+        resultCard.classList.remove('hidden');
+        bigStartBtn.style.display = 'none'; // 结算时隐藏巨型按钮
+        document.getElementById('final-score').innerText = totalScore;
+        projectile.classList.add('locked');
+        stage.classList.remove('active'); // 弓箭和目标区滑出
+    }
+</script>
+</body>
+</html>
