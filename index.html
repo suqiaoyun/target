@@ -2,140 +2,128 @@
 <html lang="zh-CN">
 <head>
     <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
-    <title>Target Elite - 纯净版</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+    <title>Target Elite Mobile</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@700;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --g-blue: #4285F4; --g-red: #EA4335; --g-yellow: #FBBC05; --g-green: #34A853; }
-        body { font-family: 'Roboto', sans-serif; background-color: #f8f9fa; overflow: hidden; touch-action: none; }
+        body { font-family: 'Roboto', sans-serif; background-color: #f8f9fa; overflow: hidden; touch-action: none; -webkit-user-select: none; }
         
-        #stage {
-            background-image: radial-gradient(#dadce0 1.5px, transparent 1.5px);
-            background-size: 40px 40px;
-        }
-
-        /* 擬物化弓箭样式 */
-        .bow-handle { fill: #5f6368; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2)); }
-        .bow-string { stroke: #3c4043; stroke-width: 3; stroke-linecap: round; }
+        #stage { background-image: radial-gradient(#dadce0 1.5px, transparent 1.5px); background-size: 40px 40px; }
+        .bow-string { stroke: #3c4043; stroke-width: 4; stroke-linecap: round; fill: none; }
         
         #projectile {
             background: radial-gradient(circle at 30% 30%, #669df6, var(--g-blue));
             border: 2px solid #fff;
-            box-shadow: 0 6px 12px rgba(66, 133, 244, 0.4);
+            box-shadow: 0 4px 10px rgba(66, 133, 244, 0.4);
             border-radius: 50%;
             z-index: 100;
+            pointer-events: auto; /* 确保能被点到 */
         }
 
-        /* 修复右上角：卡片式水平布局 */
         .status-card {
             background: rgba(255, 255, 255, 0.95);
-            backdrop-blur: 8px;
-            border: 1px solid #dadce0;
+            backdrop-blur: 10px;
             border-radius: 12px;
-            padding: 6px 16px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            padding: 6px 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         }
 
-        /* 得分滚轮高度固定，防止重叠 */
-        #score-roller { height: 32px; overflow: hidden; display: flex; align-items: flex-start; }
-        .roller-digit-box { transition: transform 0.5s cubic-bezier(0, 0, 0.2, 1); display: flex; flex-direction: column; }
-        .digit { height: 32px; line-height: 32px; font-weight: 900; font-size: 1.6rem; color: var(--g-blue); }
+        /* 手机端分数滚动高度 */
+        #score-roller { height: 32px; overflow: hidden; display: flex; }
+        .roller-digit-box { transition: transform 0.6s cubic-bezier(0.2, 0, 0, 1); display: flex; flex-direction: column; }
+        .digit { height: 32px; line-height: 32px; font-weight: 900; font-size: 1.5rem; color: var(--g-blue); text-align: center; width: 18px; }
 
-        /* 横屏强制提示 */
         @media screen and (orientation: portrait) {
             #rotate-hint { display: flex; }
         }
     </style>
 </head>
-<body class="flex items-center justify-center h-screen">
+<body class="flex items-center justify-center h-screen w-screen">
 
 <div id="rotate-hint" class="fixed inset-0 z-[500] bg-white flex-col items-center justify-center hidden text-center p-10">
     <div class="animate-bounce text-6xl mb-6">🔄</div>
-    <h2 class="text-2xl font-bold text-gray-800">请横屏玩耍</h2>
-    <p class="text-gray-500 mt-2">为了更精准的射击体验，请锁定屏幕方向并横置手机</p>
+    <h2 class="text-xl font-bold text-gray-800">请横过手机玩耍</h2>
+    <p class="text-gray-400 mt-2">横屏才能看到完整的射箭场哦</p>
 </div>
 
 <header class="fixed top-0 w-full z-50 px-6 py-4 flex justify-between items-center pointer-events-none">
-    <div class="text-xl font-bold text-gray-800 bg-white/80 px-4 py-1 rounded-full border">Target Elite</div>
-    
-    <div class="pointer-events-auto">
-        <div class="status-card flex items-center gap-3">
-            <div class="text-center border-r pr-3">
-                <p class="text-[9px] uppercase font-bold text-gray-400">Shots</p>
-                <p id="shots-val" class="text-xl font-black text-gray-700">10</p>
-            </div>
-            <div class="text-right">
-                <p class="text-[9px] uppercase font-bold text-gray-400">Score</p>
-                <div id="score-roller"></div>
-            </div>
+    <div class="text-lg font-bold text-gray-700 bg-white/90 px-4 py-1 rounded-full shadow-sm border">Target Elite</div>
+    <div class="status-card flex items-center gap-3 pointer-events-auto">
+        <div class="text-center border-r pr-3">
+            <p class="text-[8px] font-bold text-gray-400">SHOTS</p>
+            <p id="shots-val" class="text-xl font-black text-gray-700">10</p>
+        </div>
+        <div class="text-right">
+            <p class="text-[8px] font-bold text-gray-400">SCORE</p>
+            <div id="score-roller"></div>
         </div>
     </div>
 </header>
 
 <main id="stage" class="w-full h-full relative overflow-hidden flex items-center">
-    
-    <div id="overlay" class="absolute inset-0 z-[200] bg-white/60 backdrop-blur-sm flex items-center justify-center">
-        <button id="start-btn" onclick="startGame()" class="w-40 h-40 bg-[#4285F4] text-white rounded-full border-[8px] border-white shadow-2xl hover:scale-105 transition-transform active:scale-95 font-black text-3xl">START</button>
-        <div id="result-card" class="hidden bg-white p-10 rounded-3xl shadow-2xl text-center border">
-            <p class="text-gray-400 font-bold tracking-widest mb-1">GAME OVER</p>
-            <h2 id="final-score" class="text-7xl font-black text-gray-900 mb-6">0</h2>
-            <button onclick="startGame()" class="px-10 py-3 bg-green-600 text-white rounded-full font-bold hover:bg-green-700 shadow-md active:scale-95 transition-all">TRY AGAIN</button>
+    <div id="overlay" class="absolute inset-0 z-[200] bg-white/40 backdrop-blur-sm flex items-center justify-center">
+        <button id="start-btn" onclick="startGame()" class="w-36 h-36 bg-[#4285F4] text-white rounded-full border-[6px] border-white shadow-2xl font-black text-2xl active:scale-90 transition-transform">START</button>
+        <div id="result-card" class="hidden bg-white p-8 rounded-3xl shadow-2xl text-center border">
+            <p class="text-gray-400 font-bold mb-1">FINAL SCORE</p>
+            <h2 id="final-score" class="text-6xl font-black text-gray-900 mb-6">0</h2>
+            <button onclick="startGame()" class="px-10 py-3 bg-green-600 text-white rounded-full font-bold shadow-lg">TRY AGAIN</button>
         </div>
     </div>
 
-    <div class="w-1/2 h-full relative" id="shooter-box">
+    <div class="w-1/2 h-full relative">
         <svg class="absolute inset-0 w-full h-full pointer-events-none">
-            <path d="M 180 250 C 240 350, 240 450, 180 550" stroke="#dadce0" stroke-width="12" fill="none" stroke-linecap="round" />
-            <path d="M 180 250 C 240 350, 240 450, 180 550" stroke="#5f6368" stroke-width="4" fill="none" stroke-linecap="round" />
-            <path id="band-1" class="bow-string" d="M 180 250 Q 230 400 230 400" />
-            <path id="band-2" class="bow-string" d="M 180 550 Q 230 400 230 400" />
-            <rect class="bow-handle" x="215" y="360" width="15" height="80" rx="7" />
+            <path d="M 150 25% C 210 40%, 210 60%, 150 75%" stroke="#dadce0" stroke-width="10" fill="none" stroke-linecap="round" />
+            <path id="band-1" class="bow-string" d="M 150 25% Q 200 50% 200 50%" />
+            <path id="band-2" class="bow-string" d="M 150 75% Q 200 50% 200 50%" />
         </svg>
-        <div id="projectile" class="absolute w-12 h-12" style="left: 206px; top: 376px;"></div>
+        <div id="projectile" class="absolute w-12 h-12" style="left: 176px; top: calc(50% - 24px);"></div>
     </div>
 
-    <div class="w-1/2 h-full flex flex-col items-end justify-center gap-3 pr-16">
-        <div class="score-zone h-14 w-28 bg-white border-l-[8px] border-[#EA4335] rounded-l-xl flex items-center justify-center font-black text-xl text-[#EA4335]" data-pts="100">100</div>
-        <div class="score-zone h-14 w-36 bg-white border-l-[8px] border-[#FBBC05] rounded-l-xl flex items-center justify-center font-black text-xl text-[#FBBC05]" data-pts="90">90</div>
-        <div class="score-zone h-14 w-44 bg-white border-l-[8px] border-[#34A853] rounded-l-xl flex items-center justify-center font-black text-xl text-[#34A853]" data-pts="75">75</div>
-        <div class="score-zone h-14 w-52 bg-white border-l-[8px] border-[#4285F4] rounded-l-xl flex items-center justify-center font-black text-xl text-[#4285F4]" data-pts="50">50</div>
+    <div class="w-1/2 h-full flex flex-col items-end justify-center gap-3 pr-12">
+        <div class="score-zone h-12 w-24 bg-white border-l-[8px] border-[#EA4335] rounded-l-xl flex items-center justify-center font-black text-lg text-[#EA4335]" data-pts="100">100</div>
+        <div class="score-zone h-12 w-32 bg-white border-l-[8px] border-[#FBBC05] rounded-l-xl flex items-center justify-center font-black text-lg text-[#FBBC05]" data-pts="90">90</div>
+        <div class="score-zone h-12 w-40 bg-white border-l-[8px] border-[#34A853] rounded-l-xl flex items-center justify-center font-black text-lg text-[#34A853]" data-pts="75">75</div>
+        <div class="score-zone h-12 w-48 bg-white border-l-[8px] border-[#4285F4] rounded-l-xl flex items-center justify-center font-black text-lg text-[#4285F4]" data-pts="50">50</div>
     </div>
 </main>
 
 <script>
     const projectile = document.getElementById('projectile');
     const roller = document.getElementById('score-roller');
-    const band1 = document.getElementById('band-1');
-    const band2 = document.getElementById('band-2');
+    const b1 = document.getElementById('band-1');
+    const b2 = document.getElementById('band-2');
+    const stage = document.getElementById('stage');
     
     let score = 0, shots = 10, isFlying = false, gameActive = false;
-    const originX = 206, originY = 376;
+    let originX, originY;
 
-    // 初始化滚轮
+    // 动态获取位置
+    const updateOrigin = () => {
+        originX = 176; originY = stage.offsetHeight / 2 - 24;
+        if(!isFlying) { projectile.style.left = originX + 'px'; projectile.style.top = originY + 'px'; }
+    };
+
     function initRoller() {
         roller.innerHTML = '';
         for(let i=0; i<4; i++) {
             const box = document.createElement('div');
-            box.id = `roller-box-${i}`;
-            box.className = 'roller-digit-box';
+            box.id = `rb-${i}`; box.className = 'roller-digit-box';
             for(let j=0; j<10; j++) box.innerHTML += `<div class="digit">${j}</div>`;
             roller.appendChild(box);
         }
     }
     initRoller();
 
-    function updateScore(newScore) {
-        score = newScore;
-        const s = score.toString().padStart(4, '0');
-        for(let i=0; i<4; i++) {
-            document.getElementById(`roller-box-${i}`).style.transform = `translateY(-${s[i]*32}px)`;
-        }
+    function updateScore(ns) {
+        score = ns; const s = score.toString().padStart(4, '0');
+        for(let i=0; i<4; i++) document.getElementById(`rb-${i}`).style.transform = `translateY(-${s[i]*32}px)`;
     }
 
     function startGame() {
         gameActive = true; score = 0; shots = 10;
-        updateScore(0);
+        updateScore(0); updateOrigin();
         document.getElementById('shots-val').innerText = '10';
         document.getElementById('overlay').style.display = 'none';
         document.getElementById('start-btn').classList.remove('hidden');
@@ -143,80 +131,77 @@
         resetProjectile();
     }
 
-    // 交互逻辑
-    let startX, startY, curX = 0, curY = 0, isDragging = false;
+    let sX, sY, cX = 0, cY = 0, dragging = false;
 
-    const onStart = (e) => {
+    const start = (e) => {
         if(!gameActive || isFlying) return;
-        isDragging = true;
+        dragging = true;
         const p = e.touches ? e.touches[0] : e;
-        startX = p.clientX; startY = p.clientY;
+        sX = p.clientX; sY = p.clientY;
         projectile.style.transition = 'none';
     };
 
-    const onMove = (e) => {
-        if(!isDragging) return;
+    const move = (e) => {
+        if(!dragging) return;
         const p = e.touches ? e.touches[0] : e;
-        const dx = p.clientX - startX, dy = p.clientY - startY;
-        const dist = Math.sqrt(dx*dx + dy*dy), limit = 200, r = Math.min(dist, limit) / (dist || 1);
-        curX = dx * r; curY = dy * r;
+        const dx = p.clientX - sX, dy = p.clientY - sY;
+        const d = Math.sqrt(dx*dx + dy*dy), lim = 150, r = Math.min(d, lim) / (d || 1);
+        cX = dx * r; cY = dy * r;
+        projectile.style.transform = `translate(${cX}px, ${cY}px)`;
         
-        projectile.style.transform = `translate(${curX}px, ${curY}px)`;
-        const px = originX + curX + 24, py = originY + curY + 24;
-        band1.setAttribute('d', `M 180 250 Q ${px} ${py} ${px} ${py}`);
-        band2.setAttribute('d', `M 180 550 Q ${px} ${py} ${px} ${py}`);
+        const px = originX + cX + 24, py = originY + cY + 24;
+        b1.setAttribute('d', `M 150 25% Q ${px} ${py} ${px} ${py}`);
+        b2.setAttribute('d', `M 150 75% Q ${px} ${py} ${px} ${py}`);
+        if(e.cancelable) e.preventDefault();
     };
 
-    const onEnd = () => {
-        if(!isDragging) return;
-        isDragging = false; isFlying = true;
-        shots--; document.getElementById('shots-val').innerText = shots;
-        launch(-curX * 15, -curY * 15);
+    const end = () => {
+        if(!dragging) return;
+        dragging = false; isFlying = true; shots--;
+        document.getElementById('shots-val').innerText = shots;
+        launch(-cX * 12, -cY * 12);
         resetBands();
     };
 
-    projectile.addEventListener('mousedown', onStart);
-    projectile.addEventListener('touchstart', onStart);
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('touchmove', onMove, {passive: false});
-    window.addEventListener('mouseup', onEnd);
-    window.addEventListener('touchend', onEnd);
+    projectile.addEventListener('mousedown', start);
+    projectile.addEventListener('touchstart', start, {passive: false});
+    window.addEventListener('mousemove', move);
+    window.addEventListener('touchmove', move, {passive: false});
+    window.addEventListener('mouseup', end);
+    window.addEventListener('touchend', end);
+    window.addEventListener('resize', updateOrigin);
 
     function launch(vx, vy) {
-        let x = originX, y = originY, vX = vx * 0.016, vY = vy * 0.016, g = 0.5;
-        const step = () => {
-            vY += g * 0.016; x += vX; y += vY;
+        let x = originX, y = originY, vX = vx * 0.016, vY = vy * 0.016;
+        const anim = () => {
+            vY += 0.5 * 0.016; x += vX; y += vY;
             projectile.style.left = x + 'px'; projectile.style.top = y + 'px';
             projectile.style.transform = 'none';
-
             const pR = projectile.getBoundingClientRect();
             let hit = false;
             document.querySelectorAll('.score-zone').forEach(z => {
                 const zR = z.getBoundingClientRect();
                 if(pR.right > zR.left && pR.left < zR.right && pR.bottom > zR.top && pR.top < zR.bottom) {
-                    const pts = parseInt(z.dataset.pts);
-                    updateScore(score + pts);
-                    hit = true;
+                    updateScore(score + parseInt(z.dataset.pts)); hit = true;
                 }
             });
-
-            if(hit || x > window.innerWidth || y > window.innerHeight) {
+            if(hit || x > window.innerWidth || y > window.innerHeight || x < -50) {
                 shots <= 0 ? setTimeout(endGame, 500) : resetProjectile();
-            } else requestAnimationFrame(step);
+            } else requestAnimationFrame(anim);
         };
-        requestAnimationFrame(step);
+        requestAnimationFrame(anim);
     }
 
     function resetProjectile() {
-        isFlying = false; curX = 0; curY = 0;
-        projectile.style.transition = 'all 0.5s cubic-bezier(0.19, 1, 0.22, 1)';
+        isFlying = false; cX = 0; cY = 0;
+        projectile.style.transition = 'all 0.4s ease-out';
         projectile.style.left = originX + 'px'; projectile.style.top = originY + 'px';
         projectile.style.transform = 'none';
     }
 
     function resetBands() {
-        band1.setAttribute('d', `M 180 250 Q 230 400 230 400`);
-        band2.setAttribute('d', `M 180 550 Q 230 400 230 400`);
+        b1.setAttribute('d', `M 150 25% Q 200 50% 200 50%`);
+        b2.setAttribute('d', `M 150 75% Q 200 50% 200 50%`);
     }
 
     function endGame() {
@@ -226,6 +211,8 @@
         document.getElementById('result-card').classList.remove('hidden');
         document.getElementById('final-score').innerText = score;
     }
+    
+    window.onload = updateOrigin;
 </script>
 </body>
 </html>
