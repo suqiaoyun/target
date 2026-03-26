@@ -11,7 +11,7 @@
         #stage { height: 100%; width: 100%; position: relative; background-image: radial-gradient(#e2e8f0 1.2px, transparent 1.2px); background-size: 30px 30px; }
         #ball { position: absolute; width: 42px; height: 42px; background: radial-gradient(circle at 30% 30%, #3b82f6, #1d4ed8); border: 3px solid #fff; border-radius: 50%; z-index: 1000; box-shadow: 0 8px 15px rgba(29, 78, 216, 0.3); }
         .bow-string { stroke: #334155; stroke-width: 5; fill: none; stroke-linecap: round; pointer-events: none; }
-        #target-box { position: absolute; display: flex; flex-direction: column; gap: 4px; z-index: 100; will-change: transform; }
+        #target-box { position: absolute; display: flex; flex-direction: column; gap: 4px; z-index: 100; will-change: transform; transition: transform 0.016s linear; }
         .score-zone { background: white; display: flex; align-items: center; justify-content: center; font-weight: 900; box-shadow: 0 4px 10px rgba(0,0,0,0.06); border-radius: 6px; }
         @media screen and (orientation: landscape) { #target-box { top: 25%; right: 28%; width: 160px; height: 50%; } .score-zone { flex: 1; font-size: 1.4rem; border-left: 6px solid; } }
         @media screen and (orientation: portrait) { #target-box { top: 20%; left: 80%; transform: translateX(-50%); width: 75px; height: 50%; } .score-zone { flex: 1; font-size: 0.9rem; border-left: 4px solid; } }
@@ -55,7 +55,7 @@
 <script>
     const ball = document.getElementById('ball'), s1 = document.getElementById('s1'), s2 = document.getElementById('s2'), bow = document.getElementById('bow'), centerPop = document.getElementById('center-pop'), targetBox = document.getElementById('target-box');
     let score = 0, shots = 10, isFlying = false, active = false, oX, oY, isL = false;
-    let targetY = 0, targetDir = 1, animId = null;
+    let targetY = 0, targetDir = 1;
 
     const resetLayout = () => {
         const w = window.innerWidth, h = window.innerHeight;
@@ -84,14 +84,29 @@
         }
     };
 
-    function animateTarget() {
-        if(!active) return;
-        const speed = 1.2;
-        const range = isL ? 120 : 80;
+    // 靶子上下移动的核心逻辑
+    function moveTarget() {
+        if (!active) return;
+        const speed = 2; // 移动速度
+        const range = 150; // 移动幅度
         targetY += speed * targetDir;
         if (Math.abs(targetY) > range) targetDir *= -1;
-        targetBox.style.transform = isL ? `translateY(${targetY}px)` : `translateX(-50%) translateY(${targetY}px)`;
-        animId = requestAnimationFrame(animateTarget);
+        
+        // 电脑端和手机端不同的 Transform 处理
+        if (isL) {
+            targetBox.style.transform = `translateY(${targetY}px)`;
+        } else {
+            targetBox.style.transform = `translateX(-50%) translateY(${targetY}px)`;
+        }
+        requestAnimationFrame(moveTarget);
+    }
+
+    function triggerPop(pts) {
+        centerPop.innerText = (pts >= 0 ? '+' : '') + pts;
+        centerPop.style.color = pts > 0 ? '#3b82f6' : (pts < 0 ? '#ef4444' : '#64748b');
+        centerPop.classList.remove('pop-animation');
+        void centerPop.offsetWidth;
+        centerPop.classList.add('pop-animation');
     }
 
     function initGame() {
@@ -100,18 +115,86 @@
         document.getElementById('v-score').innerText = '0';
         document.getElementById('v-shots').innerText = '10';
         resetLayout();
-        if(animId) cancelAnimationFrame(animId);
-        animateTarget();
+        moveTarget(); // 游戏开始，启动靶子移动
     }
 
-    // 交互逻辑省略 (同前一版，包含 launch, onStart, onMove, onEnd)
-    // ... [保持前一版代码中的拖拽和发射逻辑] ...
-    // 注意：launch 函数内的碰撞检测依然有效，它会实时获取 target-box 的实时位置。
+    let startX, startY, moveX = 0, moveY = 0, dragging = false;
+    const getPos = (e) => (e.touches && e.touches[0]) || e;
 
-    // ... (此处省略前文已有的事件监听和 launch 函数细节，确保它们被完整包含)
-    
-    // (由于篇幅，请将前一版本的 launch 函数和事件监听器放在这里)
-    // 关键：launch 里的 getBoundingClientRect() 会自动处理 transform 后的位置！
+    const onStart = (e) => {
+        if(!active || isFlying) return;
+        const p = getPos(e);
+        const rect = ball.getBoundingClientRect();
+        if (Math.hypot(p.clientX - (rect.left + 21), p.clientY - (rect.top + 21)) < 60) {
+            dragging = true; startX = p.clientX; startY = p.clientY;
+            ball.style.transition = 'none';
+        }
+    };
+
+    const onMove = (e) => {
+        if(!dragging) return;
+        const p = getPos(e);
+        const dx = p.clientX - startX, dy = p.clientY - startY;
+        const dist = Math.hypot(dx, dy), limit = 100, ratio = Math.min(dist, limit) / (dist || 1);
+        moveX = dx * ratio; moveY = dy * ratio;
+        ball.style.transform = `translate(${moveX}px, ${moveY}px)`;
+        updateStrings(oX + 21 + moveX, oY + 21 + moveY);
+        if(e.cancelable) e.preventDefault();
+    };
+
+    const onEnd = () => {
+        if(!dragging) return;
+        // 防作弊：拉得太低无效
+        if (moveY > 85) {
+            dragging = false; moveX = 0; moveY = 0;
+            ball.style.transition = 'all 0.3s';
+            resetLayout(); return;
+        }
+        dragging = false; isFlying = true; shots--;
+        document.getElementById('v-shots').innerText = shots;
+        launch(-moveX * 0.22, -moveY * 0.22);
+    };
+
+    window.addEventListener('mousedown', onStart);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onEnd);
+    window.addEventListener('touchstart', onStart, {passive: false});
+    window.addEventListener('touchmove', onMove, {passive: false});
+    window.addEventListener('touchend', onEnd);
+
+    function launch(vx, vy) {
+        let curX = oX, curY = oY;
+        const step = () => {
+            vy += 0.015; curX += vx; curY += vy;
+            ball.style.left = curX + 'px'; ball.style.top = curY + 'px';
+            ball.style.transform = 'none';
+            const bR = ball.getBoundingClientRect();
+            let hit = false;
+            const targets = document.querySelectorAll('.score-zone');
+            
+            for(let z of targets) {
+                const zR = z.getBoundingClientRect();
+                // 实时检测碰撞，即便靶子在移动，getBoundingClientRect 拿到的也是实时位置
+                if(bR.right > zR.left && bR.left < zR.right && bR.bottom > zR.top && bR.top < zR.bottom) {
+                    // 正面击中判断
+                    if (bR.left + 21 < zR.left + 15) {
+                        const pts = parseInt(z.dataset.pts);
+                        score += pts;
+                        document.getElementById('v-score').innerText = score;
+                        triggerPop(pts);
+                        hit = true;
+                        break; 
+                    }
+                }
+            }
+
+            if(hit || curX > window.innerWidth || curY > window.innerHeight || curX < -100 || curY < -100) {
+                if(shots <= 0) { setTimeout(() => { alert('游戏结束！总分：' + score); location.reload(); }, 600); }
+                else { isFlying = false; moveX = 0; moveY = 0; ball.style.transition = 'all 0.4s'; resetLayout(); }
+            } else requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+    }
 
     window.addEventListener('resize', resetLayout);
     window.onload = resetLayout;
